@@ -7,21 +7,23 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RestController
+@RestController()
+@RequestMapping("/api/board")
 @RequiredArgsConstructor
 public class BoardController {
 
     private final BoardService boardService;
     private final ModelMapper modelMapper;
 
-    @GetMapping("/api/board/list")
+    @GetMapping("/list")
     public ResultDto getBoardList() {
         List<Board> boardList = boardService.findBoardList();
         List<BoardDto> collect = boardList.stream().map(BoardDto::new).collect(Collectors.toList());
@@ -29,7 +31,7 @@ public class BoardController {
         return new ResultDto(collect);
     }
 
-    @GetMapping("/api/board/detail")
+    @GetMapping("/detail")
     public ResultDto getBoardDetail(@RequestParam("docNo") Long docNo) throws IllegalAccessException {
         Board boardDetail = boardService.findBoardDetail(docNo);
         BoardDto collect = null;
@@ -43,12 +45,45 @@ public class BoardController {
         return new ResultDto(collect);
     }
 
-    @GetMapping("/api/board/reply/list")
+    @GetMapping("/reply/list")
     public ResultDto getReplyList(@RequestParam("docNo") Long id) {
         List<Reply> replyList = boardService.findReplyList(id);
         List<ReplyDto> collect = replyList.stream().map(ReplyDto::new).collect(Collectors.toList());
 
         return new ResultDto(collect);
+    }
+
+    @PostMapping("/reply/insert")
+    public ResultDto saveReply(HttpServletRequest req) {
+        if (!req.getParameter("docNo").isBlank() && !req.getParameter("comment").isBlank()) {
+            Reply reply = new Reply();
+            reply.setDocNo(Long.parseLong(req.getParameter("docNo")));
+            reply.setContent(req.getParameter("comment"));
+            reply.setWriter("tester");
+            reply.setRegDttm(LocalDateTime.now());
+            boardService.saveReply(reply);
+        }
+
+        return new ResultDto("200");
+    }
+
+    @PostMapping("/reply/update")
+    public ResultDto updateReply(HttpServletRequest req) {
+
+
+        return new ResultDto("200");
+    }
+
+    @PostMapping("/reply/delete")
+    public ResultDto deleteReply(HttpServletRequest req) {
+        if (!req.getParameter("replyNo").isBlank() && !req.getParameter("docNo").isBlank()) {
+            Reply reply = new Reply();
+            reply.setReplyNo(Long.parseLong(req.getParameter("replyNo")));
+            reply.setDocNo(Long.parseLong(req.getParameter("docNo")));
+            boardService.deleteReply(reply);
+        }
+
+        return new ResultDto("200");
     }
 
     @Data
@@ -96,7 +131,7 @@ public class BoardController {
             this.docNo = reply.getDocNo();
             this.writer = reply.getWriter();
             this.content = reply.getContent();
-            this.regDttm = reply.getRegDttm();
+            this.regDttm = reply.getRegDttm() != null ? reply.getRegDttm().format(DateTimeFormatter.ofPattern("yyyy/MM/dd")) : null;
         }
     }
 

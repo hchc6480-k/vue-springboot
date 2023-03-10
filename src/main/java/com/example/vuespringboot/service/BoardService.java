@@ -28,4 +28,12 @@ public class BoardService {
         return replyRepository.findAll(id);
     }
 
+    public void saveReply(Reply reply) {
+        replyRepository.save(reply);
+    }
+
+    public void deleteReply(Reply reply) {
+        replyRepository.delete(reply);
+    }
+
 }
